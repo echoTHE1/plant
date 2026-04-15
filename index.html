@@ -3,13 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Welcome to Plant</title>
+    <title>File Upload Form</title>
 </head>
 <body>
-    <h1>Welcome to the Plant Repository!</h1>
-    <p>This is a platform for sharing and collaborating on plant-related files.</p>
-    <footer>
-        <p>Current Date and Time (UTC): 2026-04-15 15:46:03</p>
-    </footer>
+    <h1>Upload and Share Files</h1>
+    <form action="/upload" method="POST" enctype="multipart/form-data">
+        <label for="file">Choose file to upload:</label>
+        <input type="file" id="file" name="file" required>
+        <input type="submit" value="Upload">
+    </form>
+    <h2>Search Files</h2>
+    <form action="/search" method="GET">
+        <label for="search">Search for files:</label>
+        <input type="text" id="search" name="search" required>
+        <input type="submit" value="Search">
+    </form>
 </body>
 </html>
