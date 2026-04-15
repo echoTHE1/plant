@@ -10,18 +10,29 @@ const supabaseKey = "sb_publishable_BVZyr1BwT_GupG1DGCxIgg_V4dpnrbY";
 const supabase = supabaseJs.createClient(supabaseUrl, supabaseKey);
 
 async function loadFiles() {
-  const { data, error } = await supabase.storage.from("uploads").list();
+  const { data, error } = await supabase.storage
+    .from("uploads")
+    .list("", { limit: 100 });
+
+  if (error) {
+    console.error(error);
+    return;
+  }
 
   const list = document.getElementById("files");
   list.innerHTML = "";
 
-  data.forEach(file => {
-    const url = supabase.storage.from("uploads").getPublicUrl(file.name).data.publicUrl;
+  for (const file of data) {
+    const { data: urlData } = supabase.storage
+      .from("uploads")
+      .getPublicUrl(file.name);
+
+    const url = urlData.publicUrl;
 
     const li = document.createElement("li");
     li.innerHTML = `<a href="${url}" target="_blank">${file.name}</a>`;
     list.appendChild(li);
-  });
+  }
 }
 
 loadFiles();
