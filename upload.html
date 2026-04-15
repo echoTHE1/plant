@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Upload Files</title>
+</head>
+<body>
+
+<h1>Upload File</h1>
+
+<input type="file" id="fileInput">
+<button onclick="uploadFile()">Upload</button>
+
+<p id="status"></p>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+const supabaseUrl = "https://gffrpswptuhgdchjsbet.supabase.co";
+const supabaseKey = "sb_publishable_BVZyr1BwT_GupG1DGCxIgg_V4dpnrbY";
+
+const supabase = supabaseJs.createClient(supabaseUrl, supabaseKey);
+
+async function uploadFile() {
+  const file = document.getElementById("fileInput").files[0];
+  const status = document.getElementById("status");
+
+  if (!file) {
+    alert("Pick a file first");
+    return;
+  }
+
+  status.innerText = "Uploading...";
+
+  const fileName = Date.now() + "-" + file.name;
+
+  const { data, error } = await supabase.storage
+    .from("uploads")
+    .upload(fileName, file);
+
+  if (error) {
+    status.innerText = "Error: " + error.message;
+    return;
+  }
+
+  status.innerText = "Upload complete!";
+}
+</script>
+
+</body>
+</html>
