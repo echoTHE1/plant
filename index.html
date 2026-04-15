@@ -1,59 +1,28 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Upload and Share Files</title>
-</head>
-<body>
+<h2>Files</h2>
+<ul id="files"></ul>
 
-<h1>Upload and Share Files</h1>
-
-<input type="file" id="fileInput">
-<button onclick="uploadFile()">Upload</button>
-
-<h2>Files:</h2>
-<ul id="fileList"></ul>
-
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
-const firebaseConfig = {
-  apiKey: "YOUR_KEY",
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
-  projectId: "YOUR_PROJECT",
-  storageBucket: "YOUR_PROJECT.appspot.com"
-};
+const supabaseUrl = "https://gffrpswptuhgdchjsbet.supabase.co";
+const supabaseKey = "sb_publishable_BVZyr1BwT_GupG1DGCxIgg_V4dpnrbY";
 
-firebase.initializeApp(firebaseConfig);
-const storage = firebase.storage();
+const supabase = supabaseJs.createClient(supabaseUrl, supabaseKey);
 
-function uploadFile() {
-  const file = document.getElementById("fileInput").files[0];
-  const ref = storage.ref("uploads/" + file.name);
+async function loadFiles() {
+  const { data, error } = await supabase.storage.from("uploads").list();
 
-  ref.put(file).then(() => {
-    alert("Uploaded!");
-    loadFiles();
-  });
-}
-
-function loadFiles() {
-  const list = document.getElementById("fileList");
+  const list = document.getElementById("files");
   list.innerHTML = "";
 
-  storage.ref("uploads").listAll().then(res => {
-    res.items.forEach(item => {
-      item.getDownloadURL().then(url => {
-        const li = document.createElement("li");
-        li.innerHTML = `<a href="${url}" target="_blank">${item.name}</a>`;
-        list.appendChild(li);
-      });
-    });
+  data.forEach(file => {
+    const url = supabase.storage.from("uploads").getPublicUrl(file.name).data.publicUrl;
+
+    const li = document.createElement("li");
+    li.innerHTML = `<a href="${url}" target="_blank">${file.name}</a>`;
+    list.appendChild(li);
   });
 }
 
 loadFiles();
 </script>
-
-</body>
-</html>
