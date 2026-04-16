@@ -1,3 +1,10 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Files</title>
+</head>
+<body>
+
 <h2>Files</h2>
 <ul id="files"></ul>
 
@@ -7,33 +14,39 @@
 const supabaseUrl = "https://gffrpswptuhgdchjsbet.supabase.co";
 const supabaseKey = "sb_publishable_BVZyr1BwT_GupG1DGCxIgg_V4dpnrbY";
 
-const supabase = supabaseJs.createClient(supabaseUrl, supabaseKey);
+const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
 async function loadFiles() {
+  const list = document.getElementById("files");
+
   const { data, error } = await supabase.storage
     .from("uploads")
-    .list("", { limit: 100 });
+    .list();
 
   if (error) {
+    list.innerHTML = "<li>Error loading files</li>";
     console.error(error);
     return;
   }
 
-  const list = document.getElementById("files");
-  list.innerHTML = "";
+  if (!data || data.length === 0) {
+    list.innerHTML = "<li>No files uploaded yet</li>";
+    return;
+  }
 
-  for (const file of data) {
+  data.forEach(file => {
     const { data: urlData } = supabase.storage
       .from("uploads")
       .getPublicUrl(file.name);
 
-    const url = urlData.publicUrl;
-
     const li = document.createElement("li");
-    li.innerHTML = `<a href="${url}" target="_blank">${file.name}</a>`;
+    li.innerHTML = `<a href="${urlData.publicUrl}" target="_blank">${file.name}</a>`;
     list.appendChild(li);
-  }
+  });
 }
 
 loadFiles();
 </script>
+
+</body>
+</html>
