@@ -6,46 +6,54 @@
 <body>
 
 <h2>Files</h2>
-<ul id="files"></ul>
+<ul id="files">Loading...</ul>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
-const supabaseUrl = "https://gffrpswptuhgdchjsbet.supabase.co";
-const supabaseKey = "sb_publishable_BVZyr1BwT_GupG1DGCxIgg_V4dpnrbY";
+window.onload = async function () {
 
-const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+  const supabaseClient = window.supabase.createClient(
+    "https://gffrpswptuhgdchjsbet.supabase.co",
+    "sb_publishable_BVZyr1BwT_GupG1DGCxIgg_V4dpnrbY"
+  );
 
-async function loadFiles() {
   const list = document.getElementById("files");
 
-  const { data, error } = await supabase.storage
-    .from("uploads")
-    .list();
-
-  if (error) {
-    list.innerHTML = "<li>Error loading files</li>";
-    console.error(error);
-    return;
-  }
-
-  if (!data || data.length === 0) {
-    list.innerHTML = "<li>No files uploaded yet</li>";
-    return;
-  }
-
-  data.forEach(file => {
-    const { data: urlData } = supabase.storage
+  try {
+    const { data, error } = await supabaseClient.storage
       .from("uploads")
-      .getPublicUrl(file.name);
+      .list();
 
-    const li = document.createElement("li");
-    li.innerHTML = `<a href="${urlData.publicUrl}" target="_blank">${file.name}</a>`;
-    list.appendChild(li);
-  });
-}
+    if (error) {
+      list.innerHTML = "<li>Error loading files</li>";
+      console.error(error);
+      return;
+    }
 
-loadFiles();
+    if (!data || data.length === 0) {
+      list.innerHTML = "<li>No files found</li>";
+      return;
+    }
+
+    list.innerHTML = "";
+
+    for (const file of data) {
+      const { data: urlData } = supabaseClient.storage
+        .from("uploads")
+        .getPublicUrl(file.name);
+
+      const li = document.createElement("li");
+      li.innerHTML = `<a href="${urlData.publicUrl}" target="_blank">${file.name}</a>`;
+      list.appendChild(li);
+    }
+
+  } catch (err) {
+    list.innerHTML = "<li>Script crashed</li>";
+    console.error(err);
+  }
+
+};
 </script>
 
 </body>
