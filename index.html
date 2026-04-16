@@ -6,53 +6,55 @@
 <body>
 
 <h2>Files</h2>
-<ul id="files">Loading...</ul>
+<ul id="files">STARTING...</ul>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
-window.onload = async function () {
+document.getElementById("files").innerHTML = "Script loaded...";
 
-  const supabaseClient = window.supabase.createClient(
+window.onload = async function () {
+  const list = document.getElementById("files");
+
+  if (!window.supabase) {
+    list.innerHTML = "❌ Supabase NOT loaded";
+    return;
+  }
+
+  list.innerHTML = "✅ Supabase loaded";
+
+  const client = window.supabase.createClient(
     "https://gffrpswptuhgdchjsbet.supabase.co",
     "sb_publishable_BVZyr1BwT_GupG1DGCxIgg_V4dpnrbY"
   );
 
-  const list = document.getElementById("files");
+  list.innerHTML = "⏳ Loading files...";
 
-  try {
-    const { data, error } = await supabaseClient.storage
-      .from("uploads")
-      .list();
+  const { data, error } = await client.storage
+    .from("uploads")
+    .list();
 
-    if (error) {
-      list.innerHTML = "<li>Error loading files</li>";
-      console.error(error);
-      return;
-    }
-
-    if (!data || data.length === 0) {
-      list.innerHTML = "<li>No files found</li>";
-      return;
-    }
-
-    list.innerHTML = "";
-
-    for (const file of data) {
-      const { data: urlData } = supabaseClient.storage
-        .from("uploads")
-        .getPublicUrl(file.name);
-
-      const li = document.createElement("li");
-      li.innerHTML = `<a href="${urlData.publicUrl}" target="_blank">${file.name}</a>`;
-      list.appendChild(li);
-    }
-
-  } catch (err) {
-    list.innerHTML = "<li>Script crashed</li>";
-    console.error(err);
+  if (error) {
+    list.innerHTML = "❌ ERROR: " + error.message;
+    return;
   }
 
+  if (!data || data.length === 0) {
+    list.innerHTML = "⚠️ No files in bucket";
+    return;
+  }
+
+  list.innerHTML = "";
+
+  data.forEach(file => {
+    const { data: urlData } = client.storage
+      .from("uploads")
+      .getPublicUrl(file.name);
+
+    const li = document.createElement("li");
+    li.innerHTML = `<a href="${urlData.publicUrl}" target="_blank">${file.name}</a>`;
+    list.appendChild(li);
+  });
 };
 </script>
 
