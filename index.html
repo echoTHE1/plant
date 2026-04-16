@@ -1,53 +1,75 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Files</title>
+  <title>File Share</title>
 </head>
 <body>
 
+<h1>Upload and Share Files</h1>
+
+<input type="file" id="fileInput">
+<button onclick="uploadFile()">Upload</button>
+
+<p id="status"></p>
+
 <h2>Files</h2>
-<ul id="files">STARTING...</ul>
+<ul id="files">Loading...</ul>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
-document.getElementById("files").innerHTML = "Script loaded...";
+const supabaseUrl = "https://gffrpswptuhgdchjsbet.supabase.co";
+const supabaseKey = "sb_publishable_BVZyr1BwT_GupG1DGCxIgg_V4dpnrbY";
 
-window.onload = async function () {
-  const list = document.getElementById("files");
+const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
-  if (!window.supabase) {
-    list.innerHTML = "❌ Supabase NOT loaded";
+async function uploadFile() {
+  const file = document.getElementById("fileInput").files[0];
+  const status = document.getElementById("status");
+
+  if (!file) {
+    alert("Pick a file first");
     return;
   }
 
-  list.innerHTML = "✅ Supabase loaded";
+  status.innerText = "Uploading...";
 
-  const client = window.supabase.createClient(
-    "https://gffrpswptuhgdchjsbet.supabase.co",
-    "sb_publishable_BVZyr1BwT_GupG1DGCxIgg_V4dpnrbY"
-  );
+  const fileName = Date.now() + "-" + file.name;
 
-  list.innerHTML = "⏳ Loading files...";
+  const { error } = await supabase.storage
+    .from("uploads")
+    .upload(fileName, file);
 
-  const { data, error } = await client.storage
+  if (error) {
+    status.innerText = "Error: " + error.message;
+    return;
+  }
+
+  status.innerText = "Upload complete!";
+  loadFiles(); // refresh list
+}
+
+async function loadFiles() {
+  const list = document.getElementById("files");
+
+  const { data, error } = await supabase.storage
     .from("uploads")
     .list();
 
   if (error) {
-    list.innerHTML = "❌ ERROR: " + error.message;
+    list.innerHTML = "<li>Error loading files</li>";
     return;
   }
 
   if (!data || data.length === 0) {
-    list.innerHTML = "⚠️ No files in bucket";
+    list.innerHTML = "<li>No files found</li>";
     return;
   }
 
   list.innerHTML = "";
 
   data.forEach(file => {
-    const { data: urlData } = client.storage
+    const { data: urlData } = supabase.storage
       .from("uploads")
       .getPublicUrl(file.name);
 
@@ -55,7 +77,9 @@ window.onload = async function () {
     li.innerHTML = `<a href="${urlData.publicUrl}" target="_blank">${file.name}</a>`;
     list.appendChild(li);
   });
-};
+}
+
+loadFiles();
 </script>
 
 </body>
