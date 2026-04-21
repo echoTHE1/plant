@@ -353,6 +353,36 @@
   }
 
   // ── File upload ───────────────────────────────────────────
+  async function tryUpload0x0(file) {
+    const form = new FormData();
+    form.append('file', file);
+    const res = await fetch('https://0x0.st', { method: 'POST', body: form });
+    const url = (await res.text()).trim();
+    if (url.startsWith('http')) return url;
+    throw new Error('0x0 failed');
+  }
+
+  async function tryUploadTransfer(file) {
+    const res = await fetch('https://transfer.sh/' + encodeURIComponent(file.name), {
+      method: 'PUT', body: file,
+    });
+    const url = (await res.text()).trim();
+    if (url.startsWith('http')) return url;
+    throw new Error('transfer.sh failed');
+  }
+
+  async function tryUploadGofile(file) {
+    const serverRes = await fetch('https://api.gofile.io/servers');
+    const serverJson = await serverRes.json();
+    const server = serverJson.data.servers[0].name;
+    const form = new FormData();
+    form.append('file', file);
+    const res = await fetch('https://' + server + '.gofile.io/contents/uploadfile', { method: 'POST', body: form });
+    const json = await res.json();
+    if (json.status === 'ok') return json.data.downloadPage;
+    throw new Error('gofile failed');
+  }
+
   async function uploadFile(file) {
     if (file.size > 512 * 1024 * 1024) {
       showError('File must be under 512MB.');
@@ -369,29 +399,25 @@
       setProgress(progress);
     }, 200);
 
-    try {
-      const form = new FormData();
-      form.append('file', file);
+    const services = [
+      { name: '0x0.st',      fn: () => tryUpload0x0(file) },
+      { name: 'transfer.sh', fn: () => tryUploadTransfer(file) },
+      { name: 'gofile.io',   fn: () => tryUploadGofile(file) },
+    ];
 
-      const res = await fetch('https://0x0.st', {
-        method: 'POST',
-        body: form,
-      });
-
-      clearInterval(progressInterval);
-      setProgress(100);
-
-      const text = await res.text();
-      const url = text.trim();
-      if (url.startsWith('https://') || url.startsWith('http://')) {
+    for (const svc of services) {
+      try {
+        $uploadingName.textContent = 'Trying ' + svc.name + '…';
+        const url = await svc.fn();
+        clearInterval(progressInterval);
+        setProgress(100);
         showDone(url, false);
-      } else {
-        throw new Error('Unexpected response');
-      }
-    } catch (err) {
-      clearInterval(progressInterval);
-      showError('Upload failed. Check your connection and try again.');
+        return;
+      } catch (e) { /* try next */ }
     }
+
+    clearInterval(progressInterval);
+    showError('All upload services failed. Check your connection or try a smaller file.');
   }
 
   function showDone(url, isUrl) {
