@@ -239,7 +239,7 @@
         <div id="drop-zone">
           <span class="drop-arrow">↑</span>
           <h2>Click or drag a file here</h2>
-          <p>up to 200MB &nbsp;·&nbsp; link expires after 72 hours</p>
+          <p>up to 512MB &nbsp;·&nbsp; permanent link</p>
         </div>
         <input type="file" id="file-input" style="display:none" />
       </div>
@@ -288,7 +288,7 @@
 
   </div><!-- /card -->
 
-  <footer>Files hosted by litterbox.catbox.moe &nbsp;·&nbsp; expires after 72h</footer>
+  <footer>Files hosted by 0x0.st &nbsp;·&nbsp; up to 512MB &nbsp;·&nbsp; permanent</footer>
 
 </div><!-- /wrap -->
 
@@ -354,8 +354,8 @@
 
   // ── File upload ───────────────────────────────────────────
   async function uploadFile(file) {
-    if (file.size > 200 * 1024 * 1024) {
-      showError('File must be under 200MB.');
+    if (file.size > 512 * 1024 * 1024) {
+      showError('File must be under 512MB.');
       return;
     }
 
@@ -371,11 +371,9 @@
 
     try {
       const form = new FormData();
-      form.append('reqtype', 'fileupload');
-      form.append('time', '72h');
-      form.append('fileToUpload', file);
+      form.append('file', file);
 
-      const res = await fetch('https://litterbox.catbox.moe/resources/internals/api.php', {
+      const res = await fetch('https://0x0.st', {
         method: 'POST',
         body: form,
       });
@@ -384,8 +382,9 @@
       setProgress(100);
 
       const text = await res.text();
-      if (text.startsWith('https://')) {
-        showDone(text.trim(), false);
+      const url = text.trim();
+      if (url.startsWith('https://') || url.startsWith('http://')) {
+        showDone(url, false);
       } else {
         throw new Error('Unexpected response');
       }
@@ -399,7 +398,7 @@
     currentResult = url;
     $resultBox.textContent = url;
     $doneTitle.textContent = isUrl ? 'Link ready' : 'File uploaded';
-    $doneSub.textContent   = isUrl ? 'Share this link' : 'Link works for 72 hours';
+    $doneSub.textContent   = isUrl ? 'Share this link' : 'Permanent link — share with anyone';
     showState('done');
   }
 
